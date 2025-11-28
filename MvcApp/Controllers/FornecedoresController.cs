@@ -43,6 +43,7 @@ public class FornecedoresController : Controller
    }
 
    [HttpPost]
+   [ValidateAntiForgeryToken]
    public async Task<IActionResult> Criar(CriarFornecedorViewModel criarFornecedorViewModel)
    {
        if (!ModelState.IsValid)
@@ -100,6 +101,7 @@ public class FornecedoresController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar(EditarFornecedorViewModel form)
     {
         if (!ModelState.IsValid)
