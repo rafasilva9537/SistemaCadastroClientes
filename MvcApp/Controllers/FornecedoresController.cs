@@ -54,6 +54,9 @@ public class FornecedoresController : Controller
         }
 
         var fornecedorModel = form.Fornecedor.ToFornecedorModel();
+        _dbContext.Fornecedores.Add(fornecedorModel);
+        await _dbContext.SaveChangesAsync();
+        
         return RedirectToAction("Index");
     }
 

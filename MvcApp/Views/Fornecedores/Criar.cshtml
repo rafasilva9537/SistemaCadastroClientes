@@ -27,11 +27,12 @@
 
     <div class="mb-3">
         <select asp-for="Fornecedor.SegmentoId" class="form-select">
-            @foreach (var segmento in Model.Segmentos)
+            @foreach (var segmento in Model.Segmentos ?? [])
             {
                 <option value="@segmento.Id">@segmento.Nome</option>
             }
         </select>
+        <span asp-validation-for="Fornecedor.SegmentoId" class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary">Criar Fornecedor</button>
