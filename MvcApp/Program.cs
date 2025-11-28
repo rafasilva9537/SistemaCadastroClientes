@@ -1,7 +1,12 @@
+using MvcApp.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddSqlServer<AppDbContext>(connectionString);
 
 var app = builder.Build();
 

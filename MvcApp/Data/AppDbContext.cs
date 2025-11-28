@@ -1,0 +1,22 @@
+﻿using Microsoft.EntityFrameworkCore;
+using MvcApp.Models;
+
+namespace MvcApp.Data;
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<Fornecedor> Fornecedors { get; set; }
+    public DbSet<Segmento> Segmentos { get; set; }
+
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
+}
