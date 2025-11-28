@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using MvcApp.ViewModels.Segmentos;
 
 namespace MvcApp.ViewModels.Fornecedor;
 
@@ -25,4 +26,7 @@ public class CriarFornecedorViewModel
     [Required(ErrorMessage = "Segmento é obrigatório.")]
     [Range(1, int.MaxValue, ErrorMessage = "Segmento inválido.")]
     public int SegmentoId { get; set; }
+    
+    [BindNever]
+    public List<SegmentoViewModel>? Segmentos { get; set; }
 }

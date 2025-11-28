@@ -26,39 +26,40 @@ public class FornecedoresController : Controller
         return View(fornecedoresViewModel);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> Criar()
-    {
-        var segmentosViewModels = await _dbContext.Segmentos
-            .Select(SegmentoMappers.ProjectToSegmentoViewModel)
-            .ToListAsync();
+   [HttpGet]
+   public async Task<IActionResult> Criar()
+   {
+       var segmentosViewModels = await _dbContext.Segmentos
+           .Select(SegmentoMappers.ProjectToSegmentoViewModel)
+           .ToListAsync();
 
-        var criarFornecedorViewModel = new CriarFornecedorFormViewModel
-        {
-            Segmentos = segmentosViewModels
-        };
+       var criarFornecedorViewModel = new CriarFornecedorViewModel
+       {
+           Segmentos = segmentosViewModels
+       };
 
-        return View(criarFornecedorViewModel);
-    }
+       return View(criarFornecedorViewModel);
+   }
 
-    [HttpPost]
-    public async Task<IActionResult> Criar(CriarFornecedorFormViewModel form)
-    {
-        if (!ModelState.IsValid)
-        {
-            form.Segmentos = await _dbContext.Segmentos
-                .Select(SegmentoMappers.ProjectToSegmentoViewModel)
-                .ToListAsync();
+   [HttpPost]
+   public async Task<IActionResult> Criar(CriarFornecedorViewModel criarFornecedorViewModel)
+   {
+       if (!ModelState.IsValid)
+       {
+           criarFornecedorViewModel.Segmentos = await _dbContext.Segmentos
+               .Select(SegmentoMappers.ProjectToSegmentoViewModel)
+               .ToListAsync();
 
-            return View(form);
-        }
+           return View(criarFornecedorViewModel);
+       }
 
-        var fornecedorModel = form.Fornecedor.ToFornecedorModel();
-        _dbContext.Fornecedores.Add(fornecedorModel);
-        await _dbContext.SaveChangesAsync();
-        
-        return RedirectToAction(nameof(Criado), new { idPublico = fornecedorModel.IdPublico });
-    }
+       var fornecedor = criarFornecedorViewModel.ToFornecedorModel();
+       
+       _dbContext.Fornecedores.Add(fornecedor);
+       await _dbContext.SaveChangesAsync();
+       
+       return RedirectToAction(nameof(Criado), new { idPublico = fornecedor.IdPublico });
+   }
 
     [HttpGet]
     public async Task<IActionResult> Criado(Guid idPublico)
