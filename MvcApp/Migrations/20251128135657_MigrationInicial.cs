@@ -50,6 +50,12 @@ namespace MvcApp.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Fornecedores_Cnpj",
+                table: "Fornecedores",
+                column: "Cnpj",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Fornecedores_IdPublico",
                 table: "Fornecedores",
                 column: "IdPublico",

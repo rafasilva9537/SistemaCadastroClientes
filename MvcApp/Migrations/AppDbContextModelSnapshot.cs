@@ -65,6 +65,9 @@ namespace MvcApp.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Cnpj")
+                        .IsUnique();
+
                     b.HasIndex("IdPublico")
                         .IsUnique();
 

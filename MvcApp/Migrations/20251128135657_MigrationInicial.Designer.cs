@@ -12,7 +12,7 @@ using MvcApp.Data;
 namespace MvcApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251128104424_MigrationInicial")]
+    [Migration("20251128135657_MigrationInicial")]
     partial class MigrationInicial
     {
         /// <inheritdoc />
@@ -67,6 +67,9 @@ namespace MvcApp.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Cnpj")
+                        .IsUnique();
 
                     b.HasIndex("IdPublico")
                         .IsUnique();

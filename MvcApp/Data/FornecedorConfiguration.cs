@@ -19,6 +19,8 @@ public class FornecedorConfiguration : IEntityTypeConfiguration<Fornecedor>
         builder.Property(f => f.Nome).HasMaxLength(100);
 
         builder.Property(f => f.Cnpj).HasMaxLength(14);
+        builder.HasIndex(f => f.Cnpj)
+            .IsUnique();
 
         builder.Property(f => f.Cep).HasMaxLength(8);
 
