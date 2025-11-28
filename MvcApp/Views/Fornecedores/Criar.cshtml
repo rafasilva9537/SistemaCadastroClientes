@@ -1,0 +1,38 @@
+﻿
+@model MvcApp.ViewModels.Fornecedor.CriarFornecedorFormViewModel;
+@{
+    ViewData["Title"] = "Criar Fornecedor";
+}
+
+<h1>Criar Fornecedor</h1>
+
+<form asp-action="Criar" method="post">
+    <div class="mb-3">
+        <label asp-for="Fornecedor.Nome"></label>
+        <input asp-for="Fornecedor.Nome" class="form-control" placeholder="Ex: Nova Eletrônicos" />
+        <span asp-validation-for="Fornecedor.Nome" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Fornecedor.Cnpj"></label>
+        <input asp-for="Fornecedor.Cnpj" class="form-control" placeholder="Ex: 12345678000199" />
+        <span asp-validation-for="Fornecedor.Cnpj" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Fornecedor.Cep"></label>
+        <input asp-for="Fornecedor.Cep" class="form-control" placeholder="Ex: 12345678" />
+        <span asp-validation-for="Fornecedor.Cep" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <select asp-for="Fornecedor.SegmentoId" class="form-select">
+            @foreach (var segmento in Model.Segmentos)
+            {
+                <option value="@segmento.Id">@segmento.Nome</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Criar Fornecedor</button>
+</form>

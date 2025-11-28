@@ -1,6 +1,6 @@
 ﻿using MvcApp.Models;
 
-namespace MvcApp.ViewModels;
+namespace MvcApp.ViewModels.Fornecedor;
 
 public class FornecedorViewModel
 {

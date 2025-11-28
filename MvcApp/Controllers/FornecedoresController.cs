@@ -2,33 +2,61 @@
 using Microsoft.EntityFrameworkCore;
 using MvcApp.Data;
 using MvcApp.Mappers;
-using MvcApp.ViewModels;
+using MvcApp.ViewModels.Fornecedor;
 
 namespace MvcApp.Controllers;
 
 public class FornecedoresController : Controller
 {
     private readonly AppDbContext _dbContext;
+    private readonly ILogger<FornecedoresController> _logger;
 
-    public FornecedoresController(AppDbContext dbContext)
+    public FornecedoresController(AppDbContext dbContext, ILogger<FornecedoresController> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Index()
     {
         var fornecedoresViewModel = await _dbContext.Fornecedores
-            .Select(FornecedoresMappers.ProjectToFornecedorViewModel)
+            .Select(FornecedorMappers.ProjectToFornecedorViewModel)
             .ToListAsync();
 
         return View(fornecedoresViewModel);
     }
 
-    [HttpPost]
-    public IActionResult Criar(CriarFornecedorViewModel fornecedor)
+    [HttpGet]
+    public async Task<IActionResult> Criar()
     {
-        return View(fornecedor);
+        var segmentosViewModels = await _dbContext.Segmentos
+            .Select(SegmentoMappers.ProjectToSegmentoViewModel)
+            .ToListAsync();
+
+        var criarFornecedorViewModel = new CriarFornecedorFormViewModel
+        {
+            Segmentos = segmentosViewModels
+        };
+
+        return View(criarFornecedorViewModel);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> Criar(CriarFornecedorFormViewModel form)
+    {
+        if (!ModelState.IsValid)
+        {
+            form.Segmentos = await _dbContext.Segmentos
+                .Select(SegmentoMappers.ProjectToSegmentoViewModel)
+                .ToListAsync();
+
+            return View(form);
+        }
+
+        var fornecedorModel = form.Fornecedor.ToFornecedorModel();
+        return RedirectToAction("Index");
+    }
+
 
     public IActionResult Editar(int id)
     {

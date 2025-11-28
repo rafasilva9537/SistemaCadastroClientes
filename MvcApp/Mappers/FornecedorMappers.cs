@@ -1,5 +1,5 @@
 ﻿using MvcApp.Models;
-using MvcApp.ViewModels;
+using MvcApp.ViewModels.Fornecedor;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
@@ -10,7 +10,7 @@ namespace MvcApp.Mappers;
 /// Expression são necessárias para permitir que o Entity Framework Core converta as projeções em SQL.
 /// Extension para os casos onde a projeção não é necessária, mas o mapeamento sim.
 /// </summary>
-public static class FornecedoresMappers
+public static class FornecedorMappers
 {
     // Model para ViewModel
     public static Expression<Func<Fornecedor, FornecedorViewModel>> ProjectToFornecedorViewModel
@@ -21,7 +21,7 @@ public static class FornecedoresMappers
             Cnpj = fornecedor.Cnpj,
             Cep = fornecedor.Cep,
             Endereco = fornecedor.Endereco,
-            Segmento = fornecedor.Segmento!.Nome
+            Segmento = fornecedor.Segmento.Nome
         };
 
 
@@ -33,7 +33,7 @@ public static class FornecedoresMappers
             Nome = fornecedorViewModel.Nome,
             Cnpj = fornecedorViewModel.Cnpj,
             Cep = fornecedorViewModel.Cep,
-            SegmentoId = fornecedorViewModel.SegmentoId
+            SegmentoId = fornecedorViewModel.SegmentoId,
         };
     }
 }
