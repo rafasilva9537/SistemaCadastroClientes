@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MvcApp.Data.Seed;
 using MvcApp.Models;
 
 namespace MvcApp.Data;
@@ -26,23 +27,8 @@ public class AppDbContext : DbContext
 
         optionsBuilder.UseSeeding((context, _) =>
         {
-            var segmentos = new List<Segmento>
-            {
-                new() { Nome = "Comércio" },
-                new() { Nome = "Serviços" },
-                new() { Nome = "Indústria" },
-            };
-
-            foreach (var segmento in segmentos)
-            {
-                bool segmentoExiste = context.Set<Segmento>().Any(s => s.Nome == segmento.Nome);
-                if (!segmentoExiste)
-                {
-                    context.Set<Segmento>().Add(segmento);
-                }
-            }
-
-            context.SaveChanges();
+            DataSeeder.SeedSegmentos(context);
+            DataSeeder.SeedFornecedores(context, quantidade: 15);
         });
     }
 }
