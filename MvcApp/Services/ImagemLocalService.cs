@@ -29,7 +29,7 @@ public class ImagemLocalService : IImagemService
     {
         _environment = environment;
     }
-
+    
     public async Task<string> SalvarImagemAsync(IFormFile imagem, string categoria)
     {
         if (imagem.Length <= 0)
@@ -65,7 +65,9 @@ public class ImagemLocalService : IImagemService
         await using FileStream imagemStream = new(caminhoCompleto, FileMode.CreateNew);
         await imagem.CopyToAsync(imagemStream);
         
-        return Path.Combine(categoria, nomeImagem);
+        // Retorna o caminho relativo da imagem salva
+        // Ex.: /imagens/categoria/xxx.jpg
+        return Path.Combine(PastaImagens, categoria, nomeImagem);
     }
 
     public FileStream ObterImagem(string nomeImagem, string categoria)
