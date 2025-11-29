@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using MvcApp.Configs;
+using MvcApp.Constantes;
 using MvcApp.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +10,24 @@ builder.Services.AddControllersWithViews();
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddSqlServer<AppDbContext>(connectionString);
+
+builder.Services.AddOptions<ViaCepConfigs>()
+    .BindConfiguration(ViaCepConfigs.NomeSection)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddHttpClient(ServicosExternosConstantes.ClienteViaCep, (httpClient) =>
+{
+    string? urlBase = builder.Configuration
+        .GetSection(ViaCepConfigs.NomeSection)
+        .Get<ViaCepConfigs>()?.UrlBase;
+    if (urlBase is null)
+    {
+        throw new InvalidOperationException("Não foi possível obter a url base de acesso ao ViaCep. Este erro não deveria ser possível com a validação em TOptions.");
+    }
+    
+    httpClient.BaseAddress = new Uri(urlBase);
+});
 
 var app = builder.Build();
 
