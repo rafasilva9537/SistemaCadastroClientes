@@ -61,7 +61,7 @@ public class FornecedoresController : Controller
                nameof(criarFornecedorViewModel.Cnpj),
                "Já existe um fornecedor cadastrado com este CNPJ.");
        }
-       
+   
        if (!ModelState.IsValid)
        {
            criarFornecedorViewModel.Segmentos = await _dbContext.Segmentos
@@ -88,6 +88,12 @@ public class FornecedoresController : Controller
        _dbContext.Fornecedores.Add(fornecedor);
        await _dbContext.SaveChangesAsync();
 
+       _logger.LogInformation(
+           "Fornecedor criado com sucesso. Nome:{Nome}, IdPublico: {IdPublico}, CNPJ: {Cnpj}",
+           fornecedor.Nome,
+           fornecedor.IdPublico,
+           fornecedor.Cnpj);
+
        return RedirectToAction(nameof(Criado), new { idPublico = fornecedor.IdPublico });
    }
 
@@ -112,7 +118,7 @@ public class FornecedoresController : Controller
                    "Não foi possível consultar o serviço de CEP.");
                return null;
            }
-           
+       
            if (cepResponse.Erro.Equals("true"))
            {
                // CEP válido com 8 dígitos mas inexistente na base do ViaCEP
@@ -159,9 +165,12 @@ public class FornecedoresController : Controller
             .Where(f => f.IdPublico == idPublico)
             .Select(FornecedorMappers.ProjectToFornecedorViewModel)
             .FirstOrDefaultAsync();
-        
+    
         if (fornecedor is null)
         {
+            _logger.LogWarning("Fornecedor não encontrado ao exibir tela de criado. IdPublico: {IdPublico}", 
+                idPublico);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -177,6 +186,8 @@ public class FornecedoresController : Controller
 
         if (fornecedor is null)
         {
+            _logger.LogWarning("Fornecedor não encontrado para edição. IdPublico: {IdPublico}", idPublico);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -204,7 +215,7 @@ public class FornecedoresController : Controller
                 nameof(form.Cnpj),
                 "Já existe outro fornecedor cadastrado com este CNPJ.");
         }
-        
+    
         string? novoEndereco = await ObterEnderecoOuAdiconarErroAsync(form.Cep, httpClientFactory, ModelState);
         if (!ModelState.IsValid || novoEndereco is null)
         {
@@ -221,9 +232,13 @@ public class FornecedoresController : Controller
 
         if (fornecedor is null)
         {
+            _logger.LogWarning(
+                "Fornecedor não encontrado ao tentar salvar edição. IdPublico: {IdPublico}",
+                form.IdPublico);
+
             return RedirectToAction(nameof(Index));
         }
-        
+    
         fornecedor.Cep = form.Cep;
         fornecedor.Nome = form.Nome;
         fornecedor.Cnpj = form.Cnpj;
@@ -231,6 +246,11 @@ public class FornecedoresController : Controller
         fornecedor.Endereco = novoEndereco ?? fornecedor.Endereco;
 
         await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Fornecedor editado com sucesso. IdPublico: {IdPublico}, CNPJ: {Cnpj}",
+            fornecedor.IdPublico,
+            fornecedor.Cnpj);
 
         return RedirectToAction(nameof(Criado), new { idPublico = fornecedor.IdPublico });
     }
@@ -245,6 +265,10 @@ public class FornecedoresController : Controller
 
         if (fornecedor is null)
         {
+            _logger.LogWarning(
+                "Fornecedor não encontrado ao acessar tela de exclusão. IdPublico: {IdPublico}",
+                idPublico);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -261,11 +285,21 @@ public class FornecedoresController : Controller
 
         if (fornecedor is null)
         {
+            _logger.LogWarning(
+                "Fornecedor não encontrado ao confirmar exclusão. IdPublico: {IdPublico}",
+                idPublico);
+
             return RedirectToAction(nameof(Index));
         }
 
         _dbContext.Fornecedores.Remove(fornecedor);
         await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Fornecedor excluído com sucesso. Nome: {Nome}, IdPublico: {IdPublico}, CNPJ: {Cnpj}",
+            fornecedor.Nome,
+            fornecedor.IdPublico,
+            fornecedor.Cnpj);
 
         return RedirectToAction(nameof(Index));
     }
@@ -278,7 +312,7 @@ public class FornecedoresController : Controller
        {
            // (Logradouro, Complemento) - (Bairro) - (Localidade/UF)
            var secoesDoEndereco = new List<string>(3);
-           
+       
            if (!string.IsNullOrWhiteSpace(response.Logradouro))
            {
                bool possuiComplemento = !string.IsNullOrWhiteSpace(response.Complemento);
@@ -295,18 +329,18 @@ public class FornecedoresController : Controller
 
                secoesDoEndereco.Add(logradouroFormatado);
            }
-           
+       
            if (!string.IsNullOrWhiteSpace(response.Bairro))
            {
                secoesDoEndereco.Add(response.Bairro);
            }
-           
+       
            var componentesLocalidade = new List<string>(2);
            if (!string.IsNullOrWhiteSpace(response.Localidade))
            {
                componentesLocalidade.Add(response.Localidade);
            }
-    
+
            if (!string.IsNullOrWhiteSpace(response.Uf))
            {
                componentesLocalidade.Add(response.Uf);
