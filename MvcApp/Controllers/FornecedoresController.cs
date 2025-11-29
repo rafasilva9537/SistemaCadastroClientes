@@ -31,134 +31,73 @@ public class FornecedoresController : Controller
         return View(fornecedoresViewModel);
     }
 
-   [HttpGet]
-   public async Task<IActionResult> Criar()
-   {
-       var segmentosViewModels = await _dbContext.Segmentos
-           .Select(SegmentoMappers.ProjectToSegmentoViewModel)
-           .ToListAsync();
+    [HttpGet]
+    public async Task<IActionResult> Criar()
+    {
+        var segmentosViewModels = await _dbContext.Segmentos
+            .Select(SegmentoMappers.ProjectToSegmentoViewModel)
+            .ToListAsync();
 
-       var criarFornecedorViewModel = new CriarFornecedorViewModel
-       {
-           Segmentos = segmentosViewModels
-       };
+        var criarFornecedorViewModel = new CriarFornecedorViewModel
+        {
+            Segmentos = segmentosViewModels
+        };
 
-       return View(criarFornecedorViewModel);
-   }
+        return View(criarFornecedorViewModel);
+    }
 
-   [HttpPost]
-   [ValidateAntiForgeryToken]
-   public async Task<IActionResult> Criar(
-       CriarFornecedorViewModel criarFornecedorViewModel, 
-       [FromServices] IHttpClientFactory httpClientFactory)
-   {
-       bool cpnjExiste = await _dbContext.Fornecedores
-           .AnyAsync(f => f.Cnpj == criarFornecedorViewModel.Cnpj);
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Criar(
+        CriarFornecedorViewModel criarFornecedorViewModel, 
+        [FromServices] IHttpClientFactory httpClientFactory)
+    {
+        bool cpnjExiste = await _dbContext.Fornecedores
+            .AnyAsync(f => f.Cnpj == criarFornecedorViewModel.Cnpj);
 
-       if (cpnjExiste)
-       {
-           ModelState.AddModelError(
-               nameof(criarFornecedorViewModel.Cnpj),
-               "Já existe um fornecedor cadastrado com este CNPJ.");
-       }
+        if (cpnjExiste)
+        {
+            ModelState.AddModelError(
+                nameof(criarFornecedorViewModel.Cnpj),
+                "Já existe um fornecedor cadastrado com este CNPJ.");
+        }
    
-       if (!ModelState.IsValid)
-       {
-           criarFornecedorViewModel.Segmentos = await _dbContext.Segmentos
-               .Select(SegmentoMappers.ProjectToSegmentoViewModel)
-               .ToListAsync();
+        if (!ModelState.IsValid)
+        {
+            criarFornecedorViewModel.Segmentos = await _dbContext.Segmentos
+                .Select(SegmentoMappers.ProjectToSegmentoViewModel)
+                .ToListAsync();
 
-           return View(criarFornecedorViewModel);
-       }
+            return View(criarFornecedorViewModel);
+        }
 
-       var fornecedor = criarFornecedorViewModel.ToFornecedorModel();
+        var fornecedor = criarFornecedorViewModel.ToFornecedorModel();
 
-       string? endereco = await ObterEnderecoOuAdiconarErroAsync(fornecedor.Cep, httpClientFactory, ModelState);
-       if (!ModelState.IsValid || endereco is null)
-       {
-           // Se deu algum erro na consulta do CEP, voltamos para a tela
-           criarFornecedorViewModel.Segmentos = await _dbContext.Segmentos
-               .Select(SegmentoMappers.ProjectToSegmentoViewModel)
-               .ToListAsync();
+        string? endereco = await ObterEnderecoOuAdiconarErroAsync(fornecedor.Cep, httpClientFactory, ModelState);
+        if (!ModelState.IsValid || endereco is null)
+        {
+            // Se deu algum erro na consulta do CEP, voltamos para a tela
+            criarFornecedorViewModel.Segmentos = await _dbContext.Segmentos
+                .Select(SegmentoMappers.ProjectToSegmentoViewModel)
+                .ToListAsync();
 
-           return View(criarFornecedorViewModel);
-       }
+            return View(criarFornecedorViewModel);
+        }
 
-       fornecedor.Endereco = endereco;
-       _dbContext.Fornecedores.Add(fornecedor);
-       await _dbContext.SaveChangesAsync();
+        fornecedor.Endereco = endereco;
+        _dbContext.Fornecedores.Add(fornecedor);
+        await _dbContext.SaveChangesAsync();
 
-       _logger.LogInformation(
-           "Fornecedor criado com sucesso. Nome:{Nome}, IdPublico: {IdPublico}, CNPJ: {Cnpj}",
-           fornecedor.Nome,
-           fornecedor.IdPublico,
-           fornecedor.Cnpj);
+        _logger.LogInformation(
+            "Fornecedor criado com sucesso. Nome:{Nome}, IdPublico: {IdPublico}, CNPJ: {Cnpj}",
+            fornecedor.Nome,
+            fornecedor.IdPublico,
+            fornecedor.Cnpj);
 
-       return RedirectToAction(nameof(Criado), new { idPublico = fornecedor.IdPublico });
-   }
+        return RedirectToAction(nameof(Criado), new { idPublico = fornecedor.IdPublico });
+    }
 
-   /// <summary>
-   /// Consulta o ViaCEP e retorna o endereço formatado ou adiciona erros ao ModelState.
-   /// Em caso de erro, retorna null.
-   /// </summary>
-   private async Task<string?> ObterEnderecoOuAdiconarErroAsync(
-       string cep,
-       IHttpClientFactory httpClientFactory, 
-       ModelStateDictionary modelState)
-   {
-       try
-       {
-           var clienteHttp = httpClientFactory.CreateClient(ServicosExternosConstantes.ClienteViaCep);
-           var cepResponse = await clienteHttp.GetFromJsonAsync<ViaCepResponse>($"{cep}/json/");
-
-           if (cepResponse is null)
-           {
-               modelState.AddModelError(
-                   nameof(CriarFornecedorViewModel.Cep),
-                   "Não foi possível consultar o serviço de CEP.");
-               return null;
-           }
-       
-           if (cepResponse.Erro.Equals("true"))
-           {
-               // CEP válido com 8 dígitos mas inexistente na base do ViaCEP
-               modelState.AddModelError(
-                   nameof(CriarFornecedorViewModel.Cep),
-                   "CEP não encontrado.");
-               return null;
-           }
-
-           _logger.LogInformation("Cep {FornecedorCep} retornado: {@ViaCepResponse}", cep, cepResponse);
-           string endereco = MontarEndereco(cepResponse);
-           return endereco;
-       }
-       catch (HttpRequestException ex)
-       {
-           _logger.LogError(ex, "Erro HTTP ao consultar ViaCEP para CEP {Cep}", cep);
-           modelState.AddModelError(
-               nameof(CriarFornecedorViewModel.Cep),
-               "Erro ao consultar o serviço de CEP. Tente novamente mais tarde.");
-           return null;
-       }
-       catch (JsonException ex)
-       {
-           _logger.LogError(ex, "Error ao desserializar resposta da api ViaCEP para o CEP {Cep}", cep);
-           modelState.AddModelError(
-               nameof(CriarFornecedorViewModel.Cep),
-               "Erro inesperado ao consultar o CEP.");
-           return null;
-       }
-       catch (Exception ex)
-       {
-           _logger.LogError(ex, "Erro inesperado ao consultar ViaCEP para CEP {Cep}", cep);
-           modelState.AddModelError(
-               nameof(CriarFornecedorViewModel.Cep),
-               "Erro inesperado ao consultar o CEP.");
-           throw;
-       }
-   }
-
-   [HttpGet]
+    [HttpGet]
     public async Task<IActionResult> Criado(Guid idPublico)
     {
         var fornecedor = await _dbContext.Fornecedores
@@ -304,56 +243,117 @@ public class FornecedoresController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-       /// <summary>
-       /// Monta uma string de endereço a partir da resposta do ViaCEP.
-       /// Exemplo: "Praça da Sé, lado ímpar - Sé - São Paulo/SP"
-       /// </summary>
-       private static string MontarEndereco(ViaCepResponse response)
-       {
-           // (Logradouro, Complemento) - (Bairro) - (Localidade/UF)
-           var secoesDoEndereco = new List<string>(3);
+    /// <summary>
+    /// Consulta o ViaCEP e retorna o endereço formatado ou adiciona erros ao ModelState.
+    /// Em caso de erro, retorna null.
+    /// </summary>
+    private async Task<string?> ObterEnderecoOuAdiconarErroAsync(
+        string cep,
+        IHttpClientFactory httpClientFactory, 
+        ModelStateDictionary modelState)
+    {
+        try
+        {
+            var clienteHttp = httpClientFactory.CreateClient(ServicosExternosConstantes.ClienteViaCep);
+            var cepResponse = await clienteHttp.GetFromJsonAsync<ViaCepResponse>($"{cep}/json/");
+
+            if (cepResponse is null)
+            {
+                modelState.AddModelError(
+                    nameof(CriarFornecedorViewModel.Cep),
+                    "Não foi possível consultar o serviço de CEP.");
+                return null;
+            }
        
-           if (!string.IsNullOrWhiteSpace(response.Logradouro))
-           {
-               bool possuiComplemento = !string.IsNullOrWhiteSpace(response.Complemento);
+            if (cepResponse.Erro.Equals("true"))
+            {
+                // CEP válido com 8 dígitos mas inexistente na base do ViaCEP
+                modelState.AddModelError(
+                    nameof(CriarFornecedorViewModel.Cep),
+                    "CEP não encontrado.");
+                return null;
+            }
 
-               string logradouroFormatado;
-               if (possuiComplemento)
-               {
-                   logradouroFormatado = $"{response.Logradouro}, {response.Complemento}";
-               }
-               else
-               {
-                   logradouroFormatado = response.Logradouro;
-               }
+            _logger.LogInformation("Cep {FornecedorCep} retornado: {@ViaCepResponse}", cep, cepResponse);
+            string endereco = MontarEndereco(cepResponse);
+            return endereco;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Erro HTTP ao consultar ViaCEP para CEP {Cep}", cep);
+            modelState.AddModelError(
+                nameof(CriarFornecedorViewModel.Cep),
+                "Erro ao consultar o serviço de CEP. Tente novamente mais tarde.");
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Error ao desserializar resposta da api ViaCEP para o CEP {Cep}", cep);
+            modelState.AddModelError(
+                nameof(CriarFornecedorViewModel.Cep),
+                "Erro inesperado ao consultar o CEP.");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado ao consultar ViaCEP para CEP {Cep}", cep);
+            modelState.AddModelError(
+                nameof(CriarFornecedorViewModel.Cep),
+                "Erro inesperado ao consultar o CEP.");
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// Monta uma string de endereço a partir da resposta do ViaCEP.
+    /// Exemplo: "Praça da Sé, lado ímpar - Sé - São Paulo/SP"
+    /// </summary>
+    private static string MontarEndereco(ViaCepResponse response)
+    {
+        // (Logradouro, Complemento) - (Bairro) - (Localidade/UF)
+        var secoesDoEndereco = new List<string>(3);
+   
+        if (!string.IsNullOrWhiteSpace(response.Logradouro))
+        {
+            bool possuiComplemento = !string.IsNullOrWhiteSpace(response.Complemento);
 
-               secoesDoEndereco.Add(logradouroFormatado);
-           }
-       
-           if (!string.IsNullOrWhiteSpace(response.Bairro))
-           {
-               secoesDoEndereco.Add(response.Bairro);
-           }
-       
-           var componentesLocalidade = new List<string>(2);
-           if (!string.IsNullOrWhiteSpace(response.Localidade))
-           {
-               componentesLocalidade.Add(response.Localidade);
-           }
+            string logradouroFormatado;
+            if (possuiComplemento)
+            {
+                logradouroFormatado = $"{response.Logradouro}, {response.Complemento}";
+            }
+            else
+            {
+                logradouroFormatado = response.Logradouro;
+            }
 
-           if (!string.IsNullOrWhiteSpace(response.Uf))
-           {
-               componentesLocalidade.Add(response.Uf);
-           }
+            secoesDoEndereco.Add(logradouroFormatado);
+        }
+   
+        if (!string.IsNullOrWhiteSpace(response.Bairro))
+        {
+            secoesDoEndereco.Add(response.Bairro);
+        }
+   
+        var componentesLocalidade = new List<string>(2);
+        if (!string.IsNullOrWhiteSpace(response.Localidade))
+        {
+            componentesLocalidade.Add(response.Localidade);
+        }
 
-           if (componentesLocalidade.Count > 0)
-           {
-               // Evita dupla com "/" incompleto
-               string localidadeFormatada = string.Join("/", componentesLocalidade);
-               secoesDoEndereco.Add(localidadeFormatada);
-           }
+        if (!string.IsNullOrWhiteSpace(response.Uf))
+        {
+            componentesLocalidade.Add(response.Uf);
+        }
 
-           return string.Join(" - ", secoesDoEndereco);
-       }
+        if (componentesLocalidade.Count > 0)
+        {
+            // Evita dupla com "/" incompleto
+            string localidadeFormatada = string.Join("/", componentesLocalidade);
+            secoesDoEndereco.Add(localidadeFormatada);
+        }
+
+        return string.Join(" - ", secoesDoEndereco);
+    }
 
 }
