@@ -24,11 +24,6 @@
         <input asp-for="Cep" class="form-control" placeholder="Ex: 12345678" />
         <span asp-validation-for="Cep" class="text-danger"></span>
     </div>
-
-    <div class="mb-3">
-        <label class="form-label">Endereço</label>
-        <input class="form-control" value="@(Model.Endereco)" disabled />
-    </div>
     
     <div class="mb-3">
         <select asp-for="SegmentoId" class="form-select">
