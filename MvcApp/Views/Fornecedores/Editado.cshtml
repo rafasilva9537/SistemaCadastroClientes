@@ -2,15 +2,15 @@
 @model FornecedorViewModel;
 
 @{
-    ViewData["Title"] = "Fornecedor criado";
+    ViewData["Title"] = "Fornecedor editado";
 }
 
 <main class="row justify-content-center">
     <section class="col-md-8 col-lg-6">
         <header class="mb-3">
-            <h1>Fornecedor criado</h1>
+            <h1>Fornecedor editado</h1>
         </header>
-
+        
         <article class="card">
             <header class="card-header">
                 <h2 class="h5 mb-0">Dados do fornecedor</h2>
@@ -18,7 +18,7 @@
             
             <div class="card-body">
                 <p class="text-success">
-                    O fornecedor <strong>@Model.Nome</strong> foi criado com sucesso.
+                    O fornecedor <strong>@Model.Nome</strong> foi editado com sucesso.
                 </p>
 
                 <partial name="_DadosFornecedor" model="Model" />
@@ -26,6 +26,7 @@
 
             <footer class="card-footer d-flex gap-2">
                 <a class="btn btn-primary" asp-action="Index">Voltar para a lista</a>
+                <a class="btn btn-secondary" asp-action="Criar">Criar outro fornecedor</a>
             </footer>
         </article>
         
